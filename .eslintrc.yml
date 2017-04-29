@@ -1,0 +1,29 @@
+env:
+  node: true
+  es6: true
+  mocha: true
+parser: babel-eslint
+parserOptions:
+  sourceType: module
+extends:
+  - 'airbnb-base'
+globals:
+  expect: true
+  assert: true
+rules:
+  comma-dangle: 0
+  arrow-body-style: 0
+  no-console: 1
+  no-alert: 1
+  no-debugger: 1
+  no-unused-vars: 1
+  spaced-comment: 1
+  class-methods-use-this: 1
+  space-before-function-paren: 0
+  semi: 1
+  import/extensions: 0
+  import/no-unresolved: 0
+  import/imports-first: 0
+  import/newline-after-import: 1
+  import/no-extraneous-dependencies: 0
+  import/prefer-default-export: 1

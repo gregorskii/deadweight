@@ -30,47 +30,71 @@ var _tasks2 = _interopRequireDefault(_tasks);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 var cwd = process.cwd();
 var configDir = _path2.default.join(cwd, 'deadweight', 'config');
 var taskDir = _path2.default.join(cwd, 'deadweight', 'tasks');
 var runnerFile = _path2.default.join(cwd, 'deadweight', 'runners.yml');
 
-exports.default = function (options) {
-  var runners = (0, _runners2.default)(options.runnerFile || runnerFile);
-  var yargs = (0, _cli2.default)([]);
-  var args = yargs.argv;
-  var commands = args._;
-  var tasks = (0, _tasks2.default)(options.taskDir || taskDir);
-  var run = [];
+var load = function load(options) {
+  var r = options.runnerFile || runnerFile;
+  var t = options.taskDir || taskDir;
+  var c = options.configDir || configDir;
+  var p = options.projectConfig || {};
+
+  var runners = (0, _runners2.default)(r);
+  var tasks = (0, _tasks2.default)(t);
+  var config = (0, _config2.default)(c, p);
+
+  return { runners: runners, config: config, tasks: tasks };
+};
+
+var getRun = function getRun(runners, commands, tasks) {
+  var run = void 0;
 
   if (!commands.length) {
-    var runner = runners.default;
-    run = [].concat(run, runner);
+    run = runners.default;
   } else {
-    commands.forEach(function (command) {
-      var runner = runners[command];
-      var task = tasks[command];
+    run = commands.map(function (command) {
+      if (runners[command]) return runners[command];
+      if (tasks[command]) return command;
 
-      if (runner) {
-        run = [].concat(run, runner);
-      } else if (task) {
-        run = [].concat(run, command);
-      } else {
-        _logger2.default.error(_logger2.default.chalk.red('Runner not found:') + ' ' + command);
-      }
+      _logger2.default.error(_logger2.default.chalk.red('Runner or task not found:') + ' ' + command);
+
+      return undefined;
+    }).filter(function (command) {
+      return command;
     });
   }
 
-  var config = (0, _config2.default)(options.configDir || configDir, options.projectConfig || {});
+  return run;
+};
 
-  run.forEach(function (task) {
-    var taskFn = tasks[task];
-    if (taskFn) {
-      taskFn({
-        logger: _logger2.default
-      }, config)();
-    }
-  });
+exports.default = function (options) {
+  // TODO: this will be an attempt to let the user hook into the CLI
+  var yargs = (0, _cli2.default)([]);
+  var args = yargs.argv;
+  var commands = args._;
+
+  var _load = load(options),
+      runners = _load.runners,
+      config = _load.config,
+      tasks = _load.tasks;
+
+  var run = getRun(runners, commands, tasks);
+
+  if (run.length) {
+    var _ref;
+
+    (_ref = []).concat.apply(_ref, _toConsumableArray(run)).forEach(function (task) {
+      var taskFn = tasks[task];
+      if (taskFn) {
+        taskFn({ logger: _logger2.default }, config)();
+      }
+      // TODO: else log
+    });
+  }
 
   yargs.reset();
 };

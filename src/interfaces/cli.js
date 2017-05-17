@@ -6,9 +6,7 @@ export default (modules) => {
     .help('h')
     .alias('h', 'help');
 
-  modules.forEach((module) => {
-    builder.command(module);
-  });
+  modules.forEach(module => builder.command(module);
 
   return builder;
 };
